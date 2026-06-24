@@ -80,18 +80,7 @@ export const demoInternship: InternshipItem[] = [
   }
 ];
 
-export const demoNotes: StudyNote[] = [
-  {
-    id: 'note-1',
-    subject: 'Banco de Dados',
-    discipline: 'Modelagem',
-    chapter: 'Normalizacao',
-    title: 'Formas normais',
-    content:
-      'A normalizacao organiza tabelas para reduzir repeticao e evitar anomalias. A 1FN remove grupos repetidos, a 2FN evita dependencia parcial e a 3FN evita dependencia transitiva.',
-    createdAt: new Date().toISOString()
-  }
-];
+export const demoNotes: StudyNote[] = [];
 
 export const demoMeals: Meal[] = [
   { id: 'meal-1', type: 'cafe', time: '07:00', notes: 'Café da manhã antes da aula', done: true },

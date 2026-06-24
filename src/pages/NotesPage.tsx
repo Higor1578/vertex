@@ -8,8 +8,8 @@ import { loadSubjects } from '../lib/subjects';
 import type { StudyNote, Subject } from '../lib/types';
 
 export function NotesPage() {
-  const [notes, setNotes] = useState(() => loadLocal<StudyNote[]>('hg-notes', demoNotes));
-  const [subjects] = useState(() => loadSubjects(loadLocal<StudyNote[]>('hg-notes', demoNotes).map((note) => note.subject)));
+  const [notes, setNotes] = useState(() => cleanLegacyDemoNotes(loadLocal<StudyNote[]>('hg-notes', demoNotes)));
+  const [subjects] = useState(() => loadSubjects(cleanLegacyDemoNotes(loadLocal<StudyNote[]>('hg-notes', demoNotes)).map((note) => note.subject)));
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [pack, setPack] = useState<StudyPack | null>(null);
   const [busy, setBusy] = useState(false);
@@ -110,6 +110,10 @@ function groupBySubject(notes: StudyNote[]) {
   });
 
   return Array.from(groups.entries()).sort(([first], [second]) => first.localeCompare(second));
+}
+
+function cleanLegacyDemoNotes(notes: StudyNote[]) {
+  return notes.filter((note) => note.id !== 'note-1' && note.title !== 'Formas normais');
 }
 
 function SubjectSelect({ subjects, value, onChange }: { subjects: Subject[]; value: string; onChange: (value: string) => void }) {
