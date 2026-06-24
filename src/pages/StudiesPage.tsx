@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
 import { Button, Card, Field, inputClass, PageTitle } from '../components/ui';
 import { demoStudies } from '../lib/demoData';
 import { loadLocal, saveLocal } from '../lib/localStore';
@@ -9,8 +9,10 @@ import type { Priority, StudyItem, Subject } from '../lib/types';
 export function StudiesPage() {
   const [items, setItems] = useState(() => loadLocal<StudyItem[]>('hg-studies', demoStudies));
   const [subjects, setSubjects] = useState(() => loadSubjects(loadLocal<StudyItem[]>('hg-studies', demoStudies).map((item) => item.subject)));
+  const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [subjectName, setSubjectName] = useState('');
   const [form, setForm] = useState({ subject: '', type: 'aula' as StudyItem['type'], title: '', date: new Date().toISOString().slice(0, 10), time: '19:00', priority: 'media' as Priority, notes: '' });
+  const groupedItems = groupBySubject(items);
 
   function addSubject(event: React.FormEvent) {
     event.preventDefault();
@@ -76,22 +78,60 @@ export function StudiesPage() {
           </Card>
         </div>
         <div className="grid gap-3">
-          {items.map((item) => (
-            <Card key={item.id}>
-              <div className="flex flex-wrap justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold">{item.subject}: {item.title}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{labelFor(item.type)} - {item.date} {item.time}</p>
-                  <p className="mt-2 text-sm">{item.notes}</p>
-                </div>
-                <span className="h-fit rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-100">{item.priority}</span>
-              </div>
+          {groupedItems.map(([subject, subjectItems], index) => {
+            const isOpen = activeSubject === null ? index === 0 : activeSubject === subject;
+            return (
+              <Card key={subject}>
+                <button
+                  type="button"
+                  onClick={() => setActiveSubject(isOpen ? '' : subject)}
+                  className="flex w-full items-center justify-between gap-3 text-left"
+                >
+                  <span>
+                    <span className="block font-semibold">{subject}</span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">{subjectItems.length} lembrete{subjectItems.length === 1 ? '' : 's'}</span>
+                  </span>
+                  {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                </button>
+                {isOpen && (
+                  <div className="mt-4 grid gap-3">
+                    {subjectItems.map((item) => (
+                      <div key={item.id} className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
+                        <div className="flex flex-wrap justify-between gap-3">
+                          <div>
+                            <h3 className="font-semibold">{item.title}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{labelFor(item.type)} - {item.date} {item.time}</p>
+                            <p className="mt-2 text-sm">{item.notes}</p>
+                          </div>
+                          <span className="h-fit rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-100">{item.priority}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            );
+          })}
+          {!groupedItems.length && (
+            <Card>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Nenhum lembrete cadastrado.</p>
             </Card>
-          ))}
+          )}
         </div>
       </div>
     </>
   );
+}
+
+function groupBySubject(items: StudyItem[]) {
+  const groups = new Map<string, StudyItem[]>();
+
+  items.forEach((item) => {
+    const subject = item.subject || 'Geral';
+    groups.set(subject, [...(groups.get(subject) ?? []), item]);
+  });
+
+  return Array.from(groups.entries()).sort(([first], [second]) => first.localeCompare(second));
 }
 
 function SubjectSelect({ subjects, value, onChange }: { subjects: Subject[]; value: string; onChange: (value: string) => void }) {

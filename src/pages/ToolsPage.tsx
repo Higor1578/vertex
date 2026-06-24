@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BarChart3, Calculator, Delete, Divide, Equal, Landmark, Minus, Percent, Plus, Save, Scale, TrendingUp, X } from 'lucide-react';
+import { BarChart3, Calculator, ChevronDown, ChevronRight, Delete, Divide, Equal, Landmark, Minus, Percent, Plus, Save, Scale, TrendingUp, X } from 'lucide-react';
 import { Button, Card, Field, inputClass, PageTitle } from '../components/ui';
 import { loadLocal, saveLocal } from '../lib/localStore';
 
@@ -60,7 +60,9 @@ const tools: { key: ToolKey; label: string; area: string; icon: React.ElementTyp
 
 export function ToolsPage() {
   const [activeTool, setActiveTool] = useState<ToolKey>('basic');
+  const [activeArea, setActiveArea] = useState(() => tools.find((tool) => tool.key === 'basic')?.area ?? '');
   const [history, setHistory] = useState(() => loadLocal<HistoryItem[]>('hg-tool-history', []));
+  const groupedTools = groupToolsByArea();
 
   function saveResult(summary: string) {
     const tool = tools.find((item) => item.key === activeTool)?.label ?? 'Ferramenta';
@@ -77,24 +79,46 @@ export function ToolsPage() {
         <div className="grid gap-4">
           <Card>
             <div className="grid gap-2">
-              {tools.map((tool) => (
-                <button
-                  key={tool.key}
-                  type="button"
-                  onClick={() => setActiveTool(tool.key)}
-                  className={`flex items-center gap-3 rounded-md border px-3 py-2 text-left transition ${
-                    activeTool === tool.key
-                      ? 'border-brand-500 bg-brand-50 text-brand-800 dark:border-brand-400 dark:bg-brand-900/30 dark:text-brand-100'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <tool.icon size={18} />
-                  <span>
-                    <span className="block text-sm font-semibold">{tool.label}</span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">{tool.area}</span>
-                  </span>
-                </button>
-              ))}
+              {groupedTools.map(([area, areaTools], index) => {
+                const isOpen = activeArea ? activeArea === area : index === 0;
+                return (
+                  <div key={area} className="rounded-md border border-slate-200 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setActiveArea(isOpen ? '' : area)}
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left"
+                    >
+                      <span>
+                        <span className="block text-sm font-semibold">{area}</span>
+                        <span className="block text-xs text-slate-500 dark:text-slate-400">{areaTools.length} ferramenta{areaTools.length === 1 ? '' : 's'}</span>
+                      </span>
+                      {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                    </button>
+                    {isOpen && (
+                      <div className="grid gap-2 border-t border-slate-200 p-2 dark:border-slate-800">
+                        {areaTools.map((tool) => (
+                          <button
+                            key={tool.key}
+                            type="button"
+                            onClick={() => {
+                              setActiveTool(tool.key);
+                              setActiveArea(tool.area);
+                            }}
+                            className={`flex items-center gap-3 rounded-md border px-3 py-2 text-left transition ${
+                              activeTool === tool.key
+                                ? 'border-brand-500 bg-brand-50 text-brand-800 dark:border-brand-400 dark:bg-brand-900/30 dark:text-brand-100'
+                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            <tool.icon size={18} />
+                            <span className="block text-sm font-semibold">{tool.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </Card>
 
@@ -142,6 +166,16 @@ function ToolPanel({ activeTool, onSave }: { activeTool: ToolKey; onSave: (summa
   if (activeTool === 'dre') return <DreCalculator onSave={onSave} />;
   if (activeTool === 'balance') return <BalanceCalculator onSave={onSave} />;
   return <RatiosCalculator onSave={onSave} />;
+}
+
+function groupToolsByArea() {
+  const groups = new Map<string, typeof tools>();
+
+  tools.forEach((tool) => {
+    groups.set(tool.area, [...(groups.get(tool.area) ?? []), tool]);
+  });
+
+  return Array.from(groups.entries()).sort(([first], [second]) => first.localeCompare(second));
 }
 
 function BasicCalculator({ onSave }: { onSave: (summary: string) => void }) {
