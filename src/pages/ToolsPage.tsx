@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BarChart3, Calculator, ChevronDown, ChevronRight, Delete, Divide, Equal, Landmark, Minus, Percent, Plus, Save, Scale, TrendingUp, X } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { BarChart3, BookOpen, BriefcaseMedical, Calculator, Delete, Divide, Equal, Landmark, Minus, Percent, Plus, Save, Scale, Stethoscope, TrendingUp, X } from 'lucide-react';
 import { Button, Card, Field, inputClass, PageTitle } from '../components/ui';
 import { loadLocal, saveLocal } from '../lib/localStore';
 
@@ -32,43 +32,60 @@ type HistoryItem = {
   createdAt: string;
 };
 
+type ToolCategory = 'Farmacia' | 'Enfermagem' | 'Ciencias contabeis' | 'Apoio academico';
+
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const percent = new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const tools: { key: ToolKey; label: string; area: string; icon: React.ElementType }[] = [
-  { key: 'basic', label: 'Calculadora tradicional', area: 'Calculos rapidos', icon: Calculator },
-  { key: 'pharmaDose', label: 'Dose por peso', area: 'Farmacia', icon: Calculator },
-  { key: 'pharmaDilution', label: 'Diluicao C1V1=C2V2', area: 'Farmacia', icon: Percent },
-  { key: 'pharmaConcentration', label: 'Concentracao mg/mL', area: 'Farmacia', icon: Scale },
-  { key: 'pharmaInfusion', label: 'Infusao e gotas/min', area: 'Farmacia hospitalar', icon: Calculator },
-  { key: 'pharmaHalfLife', label: 'Meia-vida', area: 'Farmacocinetica', icon: BarChart3 },
-  { key: 'pharmaUnits', label: 'Conversor farmaceutico', area: 'Farmacia', icon: Calculator },
-  { key: 'interest', label: 'Juros simples e compostos', area: 'Matematica financeira', icon: Percent },
-  { key: 'loan', label: 'Financiamento Price/SAC', area: 'Matematica financeira', icon: Calculator },
-  { key: 'rate', label: 'Conversor de taxas', area: 'Economia e financas', icon: Percent },
-  { key: 'stats', label: 'Estatistica basica', area: 'Estatistica', icon: BarChart3 },
-  { key: 'swot', label: 'SWOT e 5W2H', area: 'Administracao', icon: Scale },
-  { key: 'units', label: 'Conversor de unidades', area: 'Exatas', icon: Calculator },
-  { key: 'json', label: 'Formatador JSON', area: 'Programacao e TI', icon: Calculator },
-  { key: 'margin', label: 'Margem e markup', area: 'Custos e precificacao', icon: TrendingUp },
-  { key: 'breakeven', label: 'Ponto de equilibrio', area: 'Contabilidade gerencial', icon: Scale },
-  { key: 'depreciation', label: 'Depreciacao linear', area: 'Contabilidade patrimonial', icon: Landmark },
-  { key: 'dre', label: 'DRE simplificada', area: 'Demonstracoes contabeis', icon: BarChart3 },
-  { key: 'balance', label: 'Balanco patrimonial', area: 'Contabilidade geral', icon: Calculator },
-  { key: 'ratios', label: 'Indicadores financeiros', area: 'Analise contabil', icon: BarChart3 }
+const toolCategories: { key: ToolCategory; label: string; description: string; icon: React.ElementType }[] = [
+  { key: 'Farmacia', label: 'Farmacia', description: 'Dose, diluicao, concentracao e unidades.', icon: BriefcaseMedical },
+  { key: 'Enfermagem', label: 'Enfermagem', description: 'Infusao, gotejamento e apoio hospitalar.', icon: Stethoscope },
+  { key: 'Ciencias contabeis', label: 'Ciencias contabeis', description: 'Custos, demonstracoes, indicadores e financas.', icon: Landmark },
+  { key: 'Apoio academico', label: 'Apoio academico', description: 'Calculos rapidos, estatistica, unidades e JSON.', icon: BookOpen }
+];
+
+const tools: { key: ToolKey; label: string; area: string; category: ToolCategory; icon: React.ElementType }[] = [
+  { key: 'basic', label: 'Calculadora tradicional', area: 'Calculos rapidos', category: 'Apoio academico', icon: Calculator },
+  { key: 'pharmaDose', label: 'Dose por peso', area: 'Farmacia', category: 'Farmacia', icon: Calculator },
+  { key: 'pharmaDilution', label: 'Diluicao C1V1=C2V2', area: 'Farmacia', category: 'Farmacia', icon: Percent },
+  { key: 'pharmaConcentration', label: 'Concentracao mg/mL', area: 'Farmacia', category: 'Farmacia', icon: Scale },
+  { key: 'pharmaInfusion', label: 'Infusao e gotas/min', area: 'Farmacia hospitalar', category: 'Enfermagem', icon: Calculator },
+  { key: 'pharmaHalfLife', label: 'Meia-vida', area: 'Farmacocinetica', category: 'Farmacia', icon: BarChart3 },
+  { key: 'pharmaUnits', label: 'Conversor farmaceutico', area: 'Farmacia', category: 'Farmacia', icon: Calculator },
+  { key: 'interest', label: 'Juros simples e compostos', area: 'Matematica financeira', category: 'Ciencias contabeis', icon: Percent },
+  { key: 'loan', label: 'Financiamento Price/SAC', area: 'Matematica financeira', category: 'Ciencias contabeis', icon: Calculator },
+  { key: 'rate', label: 'Conversor de taxas', area: 'Economia e financas', category: 'Ciencias contabeis', icon: Percent },
+  { key: 'stats', label: 'Estatistica basica', area: 'Estatistica', category: 'Apoio academico', icon: BarChart3 },
+  { key: 'swot', label: 'SWOT e 5W2H', area: 'Administracao', category: 'Ciencias contabeis', icon: Scale },
+  { key: 'units', label: 'Conversor de unidades', area: 'Exatas', category: 'Apoio academico', icon: Calculator },
+  { key: 'json', label: 'Formatador JSON', area: 'Programacao e TI', category: 'Apoio academico', icon: Calculator },
+  { key: 'margin', label: 'Margem e markup', area: 'Custos e precificacao', category: 'Ciencias contabeis', icon: TrendingUp },
+  { key: 'breakeven', label: 'Ponto de equilibrio', area: 'Contabilidade gerencial', category: 'Ciencias contabeis', icon: Scale },
+  { key: 'depreciation', label: 'Depreciacao linear', area: 'Contabilidade patrimonial', category: 'Ciencias contabeis', icon: Landmark },
+  { key: 'dre', label: 'DRE simplificada', area: 'Demonstracoes contabeis', category: 'Ciencias contabeis', icon: BarChart3 },
+  { key: 'balance', label: 'Balanco patrimonial', area: 'Contabilidade geral', category: 'Ciencias contabeis', icon: Calculator },
+  { key: 'ratios', label: 'Indicadores financeiros', area: 'Analise contabil', category: 'Ciencias contabeis', icon: BarChart3 }
 ];
 
 export function ToolsPage() {
-  const [activeTool, setActiveTool] = useState<ToolKey>('basic');
-  const [activeArea, setActiveArea] = useState(() => tools.find((tool) => tool.key === 'basic')?.area ?? '');
+  const [activeTool, setActiveTool] = useState<ToolKey | null>(null);
+  const [activeCategory, setActiveCategory] = useState<ToolCategory | null>(null);
   const [history, setHistory] = useState(() => loadLocal<HistoryItem[]>('hg-tool-history', []));
-  const groupedTools = groupToolsByArea();
+  const toolPanelRef = useRef<HTMLDivElement>(null);
+  const visibleTools = activeCategory ? tools.filter((tool) => tool.category === activeCategory) : [];
 
   function saveResult(summary: string) {
     const tool = tools.find((item) => item.key === activeTool)?.label ?? 'Ferramenta';
     const next = [{ id: crypto.randomUUID(), tool, summary, createdAt: new Date().toISOString() }, ...history].slice(0, 10);
     setHistory(next);
     saveLocal('hg-tool-history', next);
+  }
+
+  function selectTool(toolKey: ToolKey) {
+    setActiveTool(toolKey);
+    window.setTimeout(() => {
+      toolPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   }
 
   return (
@@ -78,49 +95,60 @@ export function ToolsPage() {
       <div className="grid gap-4 xl:grid-cols-[0.78fr_1.22fr]">
         <div className="grid gap-4">
           <Card>
-            <div className="grid gap-2">
-              {groupedTools.map(([area, areaTools], index) => {
-                const isOpen = activeArea ? activeArea === area : index === 0;
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+              {toolCategories.map((category) => {
+                const Icon = category.icon;
+                const isActive = activeCategory === category.key;
                 return (
-                  <div key={area} className="rounded-md border border-slate-200 dark:border-slate-800">
-                    <button
-                      type="button"
-                      onClick={() => setActiveArea(isOpen ? '' : area)}
-                      className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left"
-                    >
-                      <span>
-                        <span className="block text-sm font-semibold">{area}</span>
-                        <span className="block text-xs text-slate-500 dark:text-slate-400">{areaTools.length} ferramenta{areaTools.length === 1 ? '' : 's'}</span>
-                      </span>
-                      {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                    </button>
-                    {isOpen && (
-                      <div className="grid gap-2 border-t border-slate-200 p-2 dark:border-slate-800">
-                        {areaTools.map((tool) => (
-                          <button
-                            key={tool.key}
-                            type="button"
-                            onClick={() => {
-                              setActiveTool(tool.key);
-                              setActiveArea(tool.area);
-                            }}
-                            className={`flex items-center gap-3 rounded-md border px-3 py-2 text-left transition ${
-                              activeTool === tool.key
-                                ? 'border-brand-500 bg-brand-50 text-brand-800 dark:border-brand-400 dark:bg-brand-900/30 dark:text-brand-100'
-                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
-                            }`}
-                          >
-                            <tool.icon size={18} />
-                            <span className="block text-sm font-semibold">{tool.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    key={category.key}
+                    type="button"
+                    onClick={() => {
+                      setActiveCategory(category.key);
+                      setActiveTool(null);
+                    }}
+                    className={`flex items-start gap-3 rounded-md border px-3 py-3 text-left transition ${
+                      isActive
+                        ? 'border-brand-500 bg-brand-50 text-brand-800 dark:border-brand-400 dark:bg-brand-900/30 dark:text-brand-100'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Icon className="mt-0.5 shrink-0" size={20} />
+                    <span>
+                      <span className="block text-sm font-semibold">{category.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{category.description}</span>
+                    </span>
+                  </button>
                 );
               })}
             </div>
           </Card>
+
+          {activeCategory && (
+            <Card>
+              <h3 className="mb-3 font-semibold">{activeCategory}</h3>
+              <div className="grid gap-2">
+                {visibleTools.map((tool) => (
+                  <button
+                    key={tool.key}
+                    type="button"
+                    onClick={() => selectTool(tool.key)}
+                    className={`flex items-center gap-3 rounded-md border px-3 py-2 text-left transition ${
+                      activeTool === tool.key
+                        ? 'border-brand-500 bg-brand-50 text-brand-800 dark:border-brand-400 dark:bg-brand-900/30 dark:text-brand-100'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <tool.icon size={18} />
+                    <span>
+                      <span className="block text-sm font-semibold">{tool.label}</span>
+                      <span className="block text-xs text-slate-500 dark:text-slate-400">{tool.area}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
 
           <Card>
             <h3 className="mb-3 font-semibold">Historico recente</h3>
@@ -139,9 +167,27 @@ export function ToolsPage() {
           </Card>
         </div>
 
-        <ToolPanel activeTool={activeTool} onSave={saveResult} />
+        <div ref={toolPanelRef}>
+          {activeTool ? <ToolPanel activeTool={activeTool} onSave={saveResult} /> : <ToolPickerHint activeCategory={activeCategory} />}
+        </div>
       </div>
     </>
+  );
+}
+
+function ToolPickerHint({ activeCategory }: { activeCategory: ToolCategory | null }) {
+  return (
+    <Card>
+      <div className="grid min-h-64 place-items-center text-center">
+        <div>
+          <Calculator className="mx-auto text-slate-400" size={34} />
+          <h3 className="mt-3 font-semibold">{activeCategory ? 'Escolha uma ferramenta' : 'Escolha uma area'}</h3>
+          <p className="mt-1 max-w-md text-sm text-slate-500 dark:text-slate-400">
+            {activeCategory ? 'As ferramentas da area selecionada aparecem ao lado.' : 'Selecione Farmacia, Enfermagem, Ciencias contabeis ou Apoio academico para ver as ferramentas.'}
+          </p>
+        </div>
+      </div>
+    </Card>
   );
 }
 
@@ -166,16 +212,6 @@ function ToolPanel({ activeTool, onSave }: { activeTool: ToolKey; onSave: (summa
   if (activeTool === 'dre') return <DreCalculator onSave={onSave} />;
   if (activeTool === 'balance') return <BalanceCalculator onSave={onSave} />;
   return <RatiosCalculator onSave={onSave} />;
-}
-
-function groupToolsByArea() {
-  const groups = new Map<string, typeof tools>();
-
-  tools.forEach((tool) => {
-    groups.set(tool.area, [...(groups.get(tool.area) ?? []), tool]);
-  });
-
-  return Array.from(groups.entries()).sort(([first], [second]) => first.localeCompare(second));
 }
 
 function BasicCalculator({ onSave }: { onSave: (summary: string) => void }) {
