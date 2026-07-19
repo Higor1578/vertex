@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email,
             user_metadata: {
               full_name: 'Usuario VERTEX',
-              role: email.includes('admin') ? 'super_admin' : 'user'
+              role: email.toLowerCase() === 'admin@vertex.com' ? 'super_admin' : 'user'
             }
           };
           localStorage.setItem('hg-demo-user', JSON.stringify(demoUser));

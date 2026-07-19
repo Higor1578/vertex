@@ -66,3 +66,17 @@ Veja o passo a passo em [DEPLOY.md](./DEPLOY.md).
 ```bash
 npm run deploy:check
 ```
+
+## Teste no celular
+
+- iPhone: abra o site no Safari, toque em Compartilhar e em **Adicionar à Tela de Início**.
+- Android: instale o APK de teste e, em Ajustes, toque em **Ativar lembretes no Android**.
+- Os dados continuam locais e separados em cada aparelho.
+
+Para atualizar o projeto Android depois de alterar o site:
+
+```bash
+npm run android:sync
+```
+
+O APK de desenvolvimento é gerado pelo Android Studio ou pelo Gradle em `android/app/build/outputs/apk/debug/`.

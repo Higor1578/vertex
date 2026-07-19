@@ -1,6 +1,8 @@
 import { demoFinances, demoInternship, demoMeals, demoSettings, demoStudies, demoTasks } from './demoData';
 import { loadLocal, saveLocal } from './localStore';
 import type { FinanceRecord, InternshipItem, Meal, NotificationSettings, StudyItem, Task } from './types';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export type Reminder = {
   id: string;
@@ -18,6 +20,37 @@ export type PushSetupStatus = {
 };
 
 const sentKey = 'hg-sent-notifications';
+
+export function usesNativeNotifications() { return Capacitor.isNativePlatform(); }
+
+export async function enableNativeNotifications() {
+  const permission = await LocalNotifications.requestPermissions();
+  if (permission.display !== 'granted') throw new Error('Permissão de notificação não concedida.');
+  const exact = await LocalNotifications.checkExactNotificationSetting();
+  if (exact.exact_alarm !== 'granted') await LocalNotifications.changeExactNotificationSetting();
+  await syncNativeNotifications();
+}
+
+export async function syncNativeNotifications() {
+  if (!usesNativeNotifications()) return;
+  const permission = await LocalNotifications.checkPermissions();
+  if (permission.display !== 'granted') return;
+  const pending = await LocalNotifications.getPending();
+  const managed = pending.notifications.filter((item) => item.extra?.vertexReminder === true);
+  if (managed.length) await LocalNotifications.cancel({ notifications: managed.map(({ id }) => ({ id })) });
+  const reminders = buildReminders().filter((item) => item.at.getTime() > Date.now()).sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 60);
+  if (!reminders.length) return;
+  await LocalNotifications.schedule({ notifications: reminders.map((reminder) => ({
+    id: notificationId(reminder.id), title: reminder.title, body: reminder.body,
+    schedule: { at: reminder.at, allowWhileIdle: true }, extra: { vertexReminder: true, reminderId: reminder.id }
+  })) });
+}
+
+function notificationId(value: string) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) hash = ((hash << 5) - hash + value.charCodeAt(index)) | 0;
+  return Math.max(1, Math.abs(hash));
+}
 
 export function normalizeSettings(settings: Partial<NotificationSettings>): NotificationSettings {
   return {

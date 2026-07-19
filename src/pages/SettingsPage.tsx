@@ -3,7 +3,7 @@ import { BellRing, Moon, Sun } from 'lucide-react';
 import { Button, Card, Field, inputClass, PageTitle } from '../components/ui';
 import { demoSettings } from '../lib/demoData';
 import { loadLocal, saveLocal } from '../lib/localStore';
-import { buildReminders, enableBackgroundPush, getPushSetupStatus, normalizeSettings, type PushSetupStatus } from '../lib/notifications';
+import { buildReminders, enableBackgroundPush, enableNativeNotifications, getPushSetupStatus, normalizeSettings, usesNativeNotifications, type PushSetupStatus } from '../lib/notifications';
 import { applyTheme, getStoredTheme, type ThemeMode } from '../lib/theme';
 import type { NotificationSettings } from '../lib/types';
 
@@ -25,6 +25,16 @@ export function SettingsPage() {
   }, []);
 
   async function askPermission() {
+    if (usesNativeNotifications()) {
+      try {
+        await enableNativeNotifications();
+        setPermission('granted');
+        setPushMessage('Lembretes locais agendados no Android.');
+      } catch (error) {
+        setPushMessage(error instanceof Error ? error.message : 'Não foi possível ativar as notificações.');
+      }
+      return;
+    }
     if (!('Notification' in window)) return;
     const result = await Notification.requestPermission();
     setPermission(result);
@@ -62,6 +72,11 @@ export function SettingsPage() {
     <>
       <PageTitle title="Ajustes" subtitle="Tema, perfil e alertas para lembrar prova, estudo, estágio, refeição e contas." />
       <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="lg:col-span-2">
+          <h3 className="mb-2 font-semibold">Instalação no iPhone</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Abra o VERTEX no Safari, toque em Compartilhar, escolha “Adicionar à Tela de Início” e abra sempre pelo novo ícone. Depois volte aqui para permitir notificações.</p>
+          <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">No PWA do iPhone, sem um servidor push, lembretes com o aplicativo totalmente fechado não são garantidos.</p>
+        </Card>
         <Card>
           <h3 className="mb-4 font-semibold">Aparência e perfil</h3>
           <div className="grid gap-3">
@@ -87,9 +102,9 @@ export function SettingsPage() {
               <Field label="Contas antes"><select className={inputClass} value={settings.financeLeadTime} onChange={(e) => patch({ financeLeadTime: Number(e.target.value) })}><option value={60}>1 hora</option><option value={1440}>1 dia</option><option value={4320}>3 dias</option></select></Field>
               <Field label="Resumo de tarefas"><input className={inputClass} type="time" value={settings.taskDailyHour} onChange={(e) => patch({ taskDailyHour: e.target.value })} /></Field>
             </div>
-            <Button onClick={askPermission}><BellRing size={17} />Permitir notificações no navegador</Button>
+            <Button onClick={askPermission}><BellRing size={17} />{usesNativeNotifications() ? 'Ativar lembretes no Android' : 'Permitir notificações no navegador'}</Button>
             <p className="text-sm text-slate-500 dark:text-slate-400">Permissão atual: {permissionLabel(permission)}</p>
-            <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+            {!usesNativeNotifications() && <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-medium">Alertas em segundo plano</p>
@@ -100,7 +115,7 @@ export function SettingsPage() {
                 </Button>
               </div>
               {pushMessage && <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{pushMessage}</p>}
-            </div>
+            </div>}
           </div>
         </Card>
 

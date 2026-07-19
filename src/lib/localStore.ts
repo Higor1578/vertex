@@ -9,4 +9,5 @@ export function loadLocal<T>(key: string, fallback: T): T {
 
 export function saveLocal<T>(key: string, data: T) {
   localStorage.setItem(key, JSON.stringify(data));
+  window.dispatchEvent(new CustomEvent('vertex:local-store-updated', { detail: { key } }));
 }
