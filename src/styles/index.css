@@ -17,9 +17,33 @@
 
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
   min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+}
+
+#root { overflow-wrap: anywhere; }
+
+img,
+svg,
+canvas {
+  max-width: 100%;
+}
+
+.safe-top { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+.safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+.mobile-scroll { scrollbar-width: none; scroll-snap-type: x proximity; }
+.mobile-scroll::-webkit-scrollbar { display: none; }
+.mobile-scroll > * { scroll-snap-align: start; }
 
 button,
 input,
@@ -30,6 +54,7 @@ textarea {
 
 button {
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 button:focus-visible,

@@ -42,7 +42,8 @@ export async function syncNativeNotifications() {
   if (!reminders.length) return;
   await LocalNotifications.schedule({ notifications: reminders.map((reminder) => ({
     id: notificationId(reminder.id), title: reminder.title, body: reminder.body,
-    schedule: { at: reminder.at, allowWhileIdle: true }, extra: { vertexReminder: true, reminderId: reminder.id }
+      schedule: { at: reminder.at, allowWhileIdle: true }, smallIcon: 'ic_stat_vertex', iconColor: '#0f766e',
+      extra: { vertexReminder: true, reminderId: reminder.id }
   })) });
 }
 

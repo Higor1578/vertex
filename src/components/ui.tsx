@@ -1,13 +1,13 @@
 import { clsx } from 'clsx';
 
 export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <section className={clsx('rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900', className)}>{children}</section>;
+  return <section className={clsx('min-w-0 break-words rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900', className)}>{children}</section>;
 }
 
 export function PageTitle({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="mb-5">
-      <h2 className="text-2xl font-bold tracking-normal">{title}</h2>
+    <div className="mb-4 min-w-0 sm:mb-5">
+      <h2 className="text-xl font-bold tracking-normal sm:text-2xl">{title}</h2>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
     </div>
   );
@@ -31,4 +31,4 @@ export function Field({ label, children }: { label: string; children: React.Reac
 }
 
 export const inputClass =
-  'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-950';
+  'min-w-0 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-base outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 sm:text-sm dark:border-slate-700 dark:bg-slate-950';

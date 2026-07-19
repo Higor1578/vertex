@@ -43,8 +43,8 @@ export function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen bg-slate-950 text-white lg:grid-cols-[1.1fr_0.9fr]">
-      <section className="flex min-h-[42vh] flex-col justify-between bg-[linear-gradient(rgba(15,23,42,.45),rgba(15,23,42,.78)),url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center p-6 lg:min-h-screen lg:p-10">
+    <main className="grid min-h-[100dvh] bg-slate-950 text-white lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="safe-top flex min-h-[32vh] flex-col justify-between bg-[linear-gradient(rgba(15,23,42,.45),rgba(15,23,42,.78)),url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center p-4 sm:min-h-[38vh] sm:p-6 lg:min-h-screen lg:p-10">
         <div className="flex items-center gap-3">
           <div className="grid size-12 place-items-center rounded-lg bg-brand-600 text-xl font-bold">VX</div>
           <span className="text-lg font-semibold">VERTEX</span>
@@ -56,7 +56,7 @@ export function LoginPage() {
           </p>
         </div>
       </section>
-      <section className="grid place-items-center bg-slate-50 p-4 text-slate-950 dark:bg-slate-950 dark:text-slate-100">
+      <section className="safe-bottom grid place-items-center bg-slate-50 p-3 text-slate-950 dark:bg-slate-950 dark:text-slate-100 sm:p-4">
         <Card className="w-full max-w-md">
           <div className="mb-5">
             <h2 className="text-2xl font-bold">{mode === 'login' ? 'Entrar' : 'Criar conta'}</h2>
